@@ -1,18 +1,8 @@
 # syntax=docker/dockerfile:1.4
 FROM node:20-alpine
 
-# Install Chromium and dependencies (with cache)
-RUN --mount=type=cache,target=/var/cache/apk \
-    apk add \
-    chromium \
-    nss \
-    freetype \
-    harfbuzz \
-    ca-certificates \
-    ttf-freefont \
-    font-noto-emoji \
-    tini \
-    git
+# Install minimal dependencies
+RUN apk add --no-cache tini git
 
 # Install n8n globally (with npm cache)
 RUN --mount=type=cache,target=/root/.npm \
@@ -23,10 +13,8 @@ RUN --mount=type=cache,target=/root/.npm \
     cd /usr/local/lib/node_modules/n8n && \
     npm install --legacy-peer-deps n8n-nodes-puppeteer
 
-# Configure Puppeteer to use system Chromium
-ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+# Configure Puppeteer to connect to remote browserless
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
-ENV PUPPETEER_ARGS="--no-sandbox --disable-setuid-sandbox --disable-dev-shm-usage --disable-gpu"
 
 # Set n8n environment variables
 ENV N8N_HOST=0.0.0.0

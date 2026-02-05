@@ -1,84 +1,77 @@
 # n8n Headless
 
-Self-hosted n8n workflow automation with headless Chrome, configured for Railway deployment.
+Self-hosted n8n workflow automation with headless Chrome via Browserless sidecar, configured for Railway deployment.
 
-## Features
+## Architecture
 
-- n8n workflow automation platform
-- Headless Chrome/Chromium for browser automation
-- Pre-installed `n8n-nodes-puppeteer` community node
-- Ready for Railway deployment
+```
+┌─────────────────────────────────────────────┐
+│              Railway Project                │
+│                                             │
+│  ┌─────────────┐      ┌─────────────────┐  │
+│  │    n8n      │ ───► │   Browserless   │  │
+│  │  (port 5678)│  ws  │   (port 3000)   │  │
+│  └─────────────┘      └─────────────────┘  │
+│                                             │
+└─────────────────────────────────────────────┘
+```
+
+- **n8n**: Workflow automation (lightweight, no Chrome)
+- **Browserless**: Headless Chrome service (handles all browser tasks)
 
 ## Deploy to Railway
 
-[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template)
+### Step 1: Deploy n8n Service
 
-### Quick Setup
-
-1. Fork this repository
-2. Connect your Railway account to GitHub
-3. Create a new project from this repo
-4. Set the required environment variables (see below)
-5. **Important:** Set RAM limit to at least 2GB (Settings > Resource Limits)
-6. Deploy
-
-### Required Environment Variables
-
-Set these in your Railway project settings:
+1. Create a new Railway project
+2. Add a new service from this GitHub repo
+3. Set environment variables:
 
 | Variable | Description |
 |----------|-------------|
-| `N8N_ENCRYPTION_KEY` | Encryption key for credentials. Generate with: `openssl rand -hex 32` |
-| `WEBHOOK_URL` | Your Railway app URL (e.g., `https://your-app.railway.app`) |
+| `N8N_ENCRYPTION_KEY` | Generate with: `openssl rand -hex 32` |
+| `WEBHOOK_URL` | Your Railway app URL |
+| `N8N_BASIC_AUTH_ACTIVE` | `true` |
+| `N8N_BASIC_AUTH_USER` | Your username |
+| `N8N_BASIC_AUTH_PASSWORD` | Your password |
+| `PUPPETEER_WS_ENDPOINT` | `ws://browserless.railway.internal:3000` |
 
-### Recommended Environment Variables
+### Step 2: Deploy Browserless Service
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `N8N_BASIC_AUTH_ACTIVE` | `false` | Enable basic authentication |
-| `N8N_BASIC_AUTH_USER` | - | Username for basic auth |
-| `N8N_BASIC_AUTH_PASSWORD` | - | Password for basic auth |
-| `GENERIC_TIMEZONE` | `UTC` | Timezone for n8n |
+1. In the same Railway project, click "New Service"
+2. Select "Docker Image"
+3. Enter: `browserless/chrome:latest`
+4. Set environment variables:
+
+| Variable | Value |
+|----------|-------|
+| `MAX_CONCURRENT_SESSIONS` | `5` |
+| `CONNECTION_TIMEOUT` | `60000` |
+
+5. **Important**: In service settings, set the internal hostname to `browserless`
+
+### Step 3: Configure Networking
+
+Railway services communicate via internal networking:
+- n8n connects to browserless at `ws://browserless.railway.internal:3000`
+- No need to expose browserless to the public internet
 
 ### Resource Requirements
 
-Headless Chrome requires significant memory:
-
-| Configuration | RAM | Notes |
-|--------------|-----|-------|
-| Minimum | 1 GB | May struggle with complex pages |
-| Recommended | 2-4 GB | Good for most use cases |
-| Per browser tab | +100-300 MB | Additional memory per concurrent tab |
-
-Configure in Railway Dashboard: Settings > Resource Limits
-
-### Database Options
-
-By default, n8n uses SQLite. For production, consider adding a PostgreSQL database:
-
-1. Add a PostgreSQL service in Railway
-2. Set these environment variables:
-
-```
-DB_TYPE=postgresdb
-DB_POSTGRESDB_HOST=${{Postgres.PGHOST}}
-DB_POSTGRESDB_PORT=${{Postgres.PGPORT}}
-DB_POSTGRESDB_DATABASE=${{Postgres.PGDATABASE}}
-DB_POSTGRESDB_USER=${{Postgres.PGUSER}}
-DB_POSTGRESDB_PASSWORD=${{Postgres.PGPASSWORD}}
-```
+| Service | RAM | Notes |
+|---------|-----|-------|
+| n8n | 512MB - 1GB | Lightweight without Chrome |
+| Browserless | 1GB - 2GB | Handles Chrome processes |
 
 ## Headless Chrome / Puppeteer
 
-This image includes Chromium and the `n8n-nodes-puppeteer` community node pre-installed.
+The `n8n-nodes-puppeteer` community node is pre-installed and configured to connect to Browserless.
 
 ### Available Operations
 
-The Puppeteer node provides these operations:
-
 | Operation | Description |
 |-----------|-------------|
-| **Get Page Content** | Scrape HTML/text from web pages (with JavaScript rendering) |
+| **Get Page Content** | Scrape HTML/text with JavaScript rendering |
 | **Get Screenshot** | Capture page screenshots (PNG/JPEG) |
 | **Get PDF** | Generate PDF documents from pages |
 | **Execute Script** | Run custom Puppeteer scripts |
@@ -89,17 +82,6 @@ The Puppeteer node provides these operations:
 - Automated screenshot capture
 - PDF generation from HTML
 - Form submission automation
-- Visual regression testing
-
-### Troubleshooting
-
-| Issue | Cause | Solution |
-|-------|-------|----------|
-| "Failed to launch browser" | Chrome not found | Verify `PUPPETEER_EXECUTABLE_PATH` is set |
-| Chrome crashes immediately | Insufficient shared memory | Increase RAM limit in Railway |
-| Out of memory errors | RAM limit too low | Set Railway RAM to 2GB+ |
-| Timeout errors | Page load too slow | Increase timeout in node settings |
-| Font rendering issues | Missing fonts | Most common fonts are included |
 
 ## Local Development
 
@@ -117,17 +99,41 @@ The Puppeteer node provides these operations:
 
 4. Access n8n at http://localhost:5678
 
-The `docker-compose.yml` includes `shm_size: 1gb` which is required for Chrome to function properly.
+5. Browserless dashboard at http://localhost:3000
 
-## Volumes and Persistence
+## Database Options
 
-Railway provides persistent storage. n8n data is stored in `/home/n8n/.n8n`.
+By default, n8n uses SQLite. For production, add a PostgreSQL database:
 
-For important production deployments, use PostgreSQL for data persistence.
+1. Add a PostgreSQL service in Railway
+2. Set these environment variables on the n8n service:
+
+```
+DB_TYPE=postgresdb
+DB_POSTGRESDB_HOST=${{Postgres.PGHOST}}
+DB_POSTGRESDB_PORT=${{Postgres.PGPORT}}
+DB_POSTGRESDB_DATABASE=${{Postgres.PGDATABASE}}
+DB_POSTGRESDB_USER=${{Postgres.PGUSER}}
+DB_POSTGRESDB_PASSWORD=${{Postgres.PGPASSWORD}}
+```
+
+## Troubleshooting
+
+| Issue | Cause | Solution |
+|-------|-------|----------|
+| "Failed to connect to browser" | Browserless not reachable | Check `PUPPETEER_WS_ENDPOINT` and service hostname |
+| Browser operations timeout | Browserless resource limits | Increase RAM on browserless service |
+| "Connection refused" | Services not linked | Verify internal hostname is `browserless` |
+
+## Security Notes
+
+- Browserless should NOT be exposed publicly (no public domain needed)
+- n8n connects via Railway's internal network
+- Set `BROWSERLESS_TOKEN` if you need additional security
 
 ## Resources
 
 - [n8n Documentation](https://docs.n8n.io/)
 - [Railway Documentation](https://docs.railway.app/)
-- [n8n Environment Variables](https://docs.n8n.io/hosting/configuration/environment-variables/)
+- [Browserless Documentation](https://www.browserless.io/docs/)
 - [n8n-nodes-puppeteer](https://www.npmjs.com/package/n8n-nodes-puppeteer)
