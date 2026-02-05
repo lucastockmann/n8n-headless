@@ -1,0 +1,21 @@
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# n8n data
+.n8n/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
