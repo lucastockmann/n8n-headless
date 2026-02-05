@@ -1,0 +1,6 @@
+FROM n8nio/runners:latest
+
+# Set at deploy time:
+#   N8N_RUNNERS_AUTH_TOKEN  - must match the n8n service
+#   N8N_RUNNERS_TASK_BROKER_URI - e.g. http://<n8n-service>.railway.internal:5679
+ENV N8N_RUNNERS_MAX_CONCURRENCY=5

@@ -16,16 +16,10 @@ services:
       - TZ=${TZ:-UTC}
       - WEBHOOK_URL=${WEBHOOK_URL:-http://localhost:5678}
       - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
-      # Task runners (external mode for Python + JS code node support)
-      - N8N_RUNNERS_ENABLED=true
-      - N8N_RUNNERS_MODE=external
+      # Task runner auth token (must match the runner service)
       - N8N_RUNNERS_AUTH_TOKEN=${N8N_RUNNERS_AUTH_TOKEN:?N8N_RUNNERS_AUTH_TOKEN is required}
-      - N8N_RUNNERS_BROKER_LISTEN_ADDRESS=0.0.0.0
-      # Community nodes (install via UI: Settings > Community Nodes)
-      - N8N_COMMUNITY_PACKAGES_ENABLED=true
       # Browserless connection
       - PUPPETEER_WS_ENDPOINT=ws://browserless:3000
-      - PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
     volumes:
       - n8n_data:/home/node/.n8n
     depends_on:
