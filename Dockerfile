@@ -1,16 +1,13 @@
-# syntax=docker/dockerfile:1.4
 FROM node:20-alpine
 
 # Install minimal dependencies
 RUN apk add --no-cache tini git
 
-# Install n8n globally (with npm cache)
-RUN --mount=type=cache,id=npm-cache,target=/root/.npm \
-    npm install -g n8n
+# Install n8n globally
+RUN npm install -g n8n
 
-# Install n8n-nodes-puppeteer community node (with npm cache)
-RUN --mount=type=cache,id=npm-cache,target=/root/.npm \
-    cd /usr/local/lib/node_modules/n8n && \
+# Install n8n-nodes-puppeteer community node
+RUN cd /usr/local/lib/node_modules/n8n && \
     npm install --legacy-peer-deps n8n-nodes-puppeteer
 
 # Configure Puppeteer to connect to remote browserless
