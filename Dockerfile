@@ -1,7 +1,9 @@
+# syntax=docker/dockerfile:1.4
 FROM node:20-alpine
 
-# Install Chromium and dependencies
-RUN apk add --no-cache \
+# Install Chromium and dependencies (with cache)
+RUN --mount=type=cache,target=/var/cache/apk \
+    apk add \
     chromium \
     nss \
     freetype \
@@ -12,11 +14,13 @@ RUN apk add --no-cache \
     tini \
     git
 
-# Install n8n globally
-RUN npm install -g n8n
+# Install n8n globally (with npm cache)
+RUN --mount=type=cache,target=/root/.npm \
+    npm install -g n8n
 
-# Install n8n-nodes-puppeteer community node
-RUN cd /usr/local/lib/node_modules/n8n && \
+# Install n8n-nodes-puppeteer community node (with npm cache)
+RUN --mount=type=cache,target=/root/.npm \
+    cd /usr/local/lib/node_modules/n8n && \
     npm install --legacy-peer-deps n8n-nodes-puppeteer
 
 # Configure Puppeteer to use system Chromium
@@ -38,13 +42,10 @@ RUN mkdir -p /home/n8n/.n8n && chown -R n8n:n8n /home/n8n
 USER n8n
 WORKDIR /home/n8n
 
-# Expose the n8n port
 EXPOSE 5678
 
-# Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:5678/healthz || exit 1
 
-# Use tini as init system and start n8n
 ENTRYPOINT ["/sbin/tini", "--"]
 CMD ["n8n", "start"]
