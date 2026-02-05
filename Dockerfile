@@ -16,7 +16,7 @@ RUN npm install -g n8n
 
 # Install n8n-nodes-puppeteer community node
 RUN cd /usr/local/lib/node_modules/n8n && \
-    npm install n8n-nodes-puppeteer
+    npm install --legacy-peer-deps n8n-nodes-puppeteer
 
 # Configure Puppeteer to use system Chromium
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
