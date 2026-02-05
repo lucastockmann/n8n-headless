@@ -9,7 +9,8 @@ RUN apk add --no-cache \
     ca-certificates \
     ttf-freefont \
     font-noto-emoji \
-    tini
+    tini \
+    git
 
 # Install n8n globally
 RUN npm install -g n8n
