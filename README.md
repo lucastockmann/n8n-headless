@@ -121,7 +121,7 @@ The `docker-compose.yml` includes `shm_size: 1gb` which is required for Chrome t
 
 ## Volumes and Persistence
 
-Railway provides persistent storage. n8n data is stored in `/home/node/.n8n`.
+Railway provides persistent storage. n8n data is stored in `/home/n8n/.n8n`.
 
 For important production deployments, use PostgreSQL for data persistence.
 

@@ -20,7 +20,7 @@ services:
       - PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
       - PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
     volumes:
-      - n8n_data:/home/node/.n8n
+      - n8n_data:/home/n8n/.n8n
     # Critical: Docker defaults to 64MB for /dev/shm which causes Chrome crashes
     shm_size: '1gb'
     restart: unless-stopped
