@@ -30,12 +30,6 @@ services:
       - n8n_data:/home/node/.n8n
     depends_on:
       - browserless
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:5678/healthz || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 60s
     restart: unless-stopped
 
   # Task runner sidecar (handles Python + JS code execution)
@@ -43,8 +37,7 @@ services:
     image: n8nio/runners:latest
     network_mode: "service:n8n"
     depends_on:
-      n8n:
-        condition: service_healthy
+      - n8n
     environment:
       - N8N_RUNNERS_AUTH_TOKEN=${N8N_RUNNERS_AUTH_TOKEN:?N8N_RUNNERS_AUTH_TOKEN is required}
       - N8N_RUNNERS_MAX_CONCURRENCY=5
