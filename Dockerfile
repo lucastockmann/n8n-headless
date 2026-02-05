@@ -29,8 +29,5 @@ WORKDIR /home/n8n
 
 EXPOSE 5678
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:5678/healthz || exit 1
-
 ENTRYPOINT ["/sbin/tini", "--"]
 CMD ["n8n", "start"]
