@@ -1,7 +1,7 @@
 FROM node:20-alpine
 
 # Install minimal dependencies
-RUN apk add --no-cache tini git
+RUN apk add --no-cache tini git python3
 
 # Install n8n globally
 RUN npm install -g n8n
