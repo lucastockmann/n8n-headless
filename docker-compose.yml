@@ -16,8 +16,13 @@ services:
       - TZ=${TZ:-UTC}
       - WEBHOOK_URL=${WEBHOOK_URL:-http://localhost:5678}
       - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
+      # Puppeteer/Chromium configuration
+      - PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+      - PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
     volumes:
       - n8n_data:/home/node/.n8n
+    # Critical: Docker defaults to 64MB for /dev/shm which causes Chrome crashes
+    shm_size: '1gb'
     restart: unless-stopped
 
 volumes:
