@@ -6,6 +6,10 @@
 # n8n data
 .n8n/
 
+# n8n workflow exports (may contain credentials)
+*workflow*.json
+*credentials*.json
+
 # IDE
 .idea/
 .vscode/
