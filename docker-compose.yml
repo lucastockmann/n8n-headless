@@ -16,12 +16,36 @@ services:
       - TZ=${TZ:-UTC}
       - WEBHOOK_URL=${WEBHOOK_URL:-http://localhost:5678}
       - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
+      # Task runners (external mode for Python + JS code node support)
+      - N8N_RUNNERS_ENABLED=true
+      - N8N_RUNNERS_MODE=external
+      - N8N_RUNNERS_AUTH_TOKEN=${N8N_RUNNERS_AUTH_TOKEN:?N8N_RUNNERS_AUTH_TOKEN is required}
+      - N8N_RUNNERS_BROKER_LISTEN_ADDRESS=0.0.0.0
       # Browserless connection
       - PUPPETEER_WS_ENDPOINT=ws://browserless:3000
     volumes:
-      - n8n_data:/home/n8n/.n8n
+      - n8n_data:/home/node/.n8n
     depends_on:
       - browserless
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:5678/healthz || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+
+  # Task runner sidecar (handles Python + JS code execution)
+  n8n-runner:
+    image: n8nio/runners:latest
+    network_mode: "service:n8n"
+    depends_on:
+      n8n:
+        condition: service_healthy
+    environment:
+      - N8N_RUNNERS_AUTH_TOKEN=${N8N_RUNNERS_AUTH_TOKEN:?N8N_RUNNERS_AUTH_TOKEN is required}
+      - N8N_RUNNERS_MAX_CONCURRENCY=5
+      - N8N_RUNNERS_TASK_BROKER_URI=http://localhost:5679
     restart: unless-stopped
 
   browserless:
